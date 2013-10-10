@@ -212,12 +212,8 @@ exports.register = function (linter) {
 			commentLns = 0;
 			lastNonCommentOrNonFunc = undefined;
 		}
-		else if (data.type === "(comment)") {
+		else if (data.type === "(comment)")
 			commentLns += data.name.split("\n").length;
-			console.log(commentLns + " + " + lastValidVarDecLn + " = " + 
-				(lastValidVarDecLn + commentLns));
-			console.log(data);
-		}
 		else if (data.line === lastValidVarDecLn + commentLns + 1) {
 			if (data.name === "var")
 				lastValidVarDecLn++;
@@ -243,7 +239,6 @@ exports.register = function (linter) {
 				//declaration must not be at the top of dec scope
 				if (lastToken.line !== lastValidVarDecLn + commentLns &&
 					typeof lastNonCommentOrNonFunc !== "undefined") {
-					console.log(lastNonCommentOrNonFunc);
 					linter.warn("W121", {
 						line: data.line,
 						char: data.char
