@@ -1,3 +1,4 @@
+
 //pass - global scope, var assigned unnamed func
 var a;
 var b = function () {
@@ -62,9 +63,15 @@ function func_name2 () {
 
 //pass - unnamed multi-line function (with closing brace on the same line
 //as the last line of logic) assigned to a var followed by another
-//var declaration.
+//var declaration. Also, multi-line comments
 function func_name3 () {
+	/**
+	Some sample comments.
+	**/
 
+	/*
+	More comments
+	*/
 	var a = function () {
 		var b = 3;
 		var c = 3;
