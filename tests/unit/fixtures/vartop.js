@@ -53,6 +53,7 @@ function func_name2 () {
 	var a = true,
 		b = "hello";
 	var c = true;
+
 	//sample comment
 	var d = "world";
 
@@ -77,4 +78,21 @@ function func_name3 () {
 		var c = 3;
 		return b === c; };
 	var c;
+}
+
+function func_name4() {
+
+	//comment
+	var a = 2,
+		b = 3;
+
+	//some more comments
+	function inner() {
+
+		var c = 2,
+			d = 3;
+	}
+
+	//another comment
+	var e = 4; //should fail
 }

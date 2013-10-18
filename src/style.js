@@ -174,6 +174,7 @@ exports.register = function (linter) {
 	//number of commented lines since last valid var declaration
 	var commentLns = 0,
 		lastValidVarDecLn = 0,
+		funcDecStack = [],
 		//for paren/brace/curly brace matching
 		puncStack = [],
 		validVarDecLns = [],
@@ -190,6 +191,9 @@ exports.register = function (linter) {
 		if (!linter.getOption("vartop"))
 			return;
 
+		var lastFunc = funcDecStack.pop();
+		if (typeof lastFunc !== "undefined")
+			funcDecStack.push(lastFunc);
 		//update opening/closing punctuator stack. Useful for determining the end
 		//of a multi-line variable initialization.
 		var openPuncs  = [ "(", "{", "[" ];
@@ -201,22 +205,47 @@ exports.register = function (linter) {
 				puncStack.push(data);
 			else {
 				var tok = puncStack.pop();
-				if (_.contains(validVarDecLns, tok.line))
+				if (_.contains(validVarDecLns, tok.line)) {
+					//this is the closing punctuation of a multi-line var declar.
 					lastValidVarDecLn = data.line;
+					lastNonCommentOrNonFunc = undefined;
+					commentLns = 0;
+					//for functions declarations which are assigned to a var
+					if (typeof lastFunc !== "undefined" && lastFunc.line === tok.line)
+						funcDecStack.pop();
+				}
+				else {
+					if (tok.name === "{") {
+						if (typeof lastFunc === "undefined") {
+							lastValidVarDecLn = data.line;  //for multi-line var dec
+							lastNonCommentOrNonFunc = undefined;
+							commentLns = 0;
+						}
+						else if (lastFunc.line !== tok.line) {
+							lastValidVarDecLn = data.line;
+							lastNonCommentOrNonFunc = undefined;
+							commentLns = 0;
+						}
+						else
+							funcDecStack.pop();
+					}
+				}
 			}
 		}
 
 		//Maintain line # of last valid (top of declaring scope) var declaration.
 		if (data.name === "function") {
-			lastValidVarDecLn = data.line;
 			commentLns = 0;
+			funcDecStack.push(data);
+			lastFunc = data;
 			lastNonCommentOrNonFunc = undefined;
 		}
 		else if (data.type === "(comment)")
 			commentLns += data.name.split("\n").length;
-		else if (data.line === lastValidVarDecLn + commentLns + 1) {
+		else if (data.line === lastValidVarDecLn + commentLns + 1 ||
+			(typeof lastFunc !== "undefined" && data.line === lastFunc.line + commentLns + 1)) {
 			if (data.name === "var")
-				lastValidVarDecLn++;
+				lastValidVarDecLn = data.line;
 			if (data.name === "," && lastLnPunc.name === ",")
 				lastValidVarDecLn++;
 			if (data.name === ";" && lastLnPunc.name === ",")
@@ -224,12 +253,15 @@ exports.register = function (linter) {
 
 			lastValidVarDecLn += commentLns;
 			commentLns = 0;
+			lastNonCommentOrNonFunc = undefined;
 		}
 		else if (typeof lastToken !== "undefined" && lastToken.name === ";" && 
 			lastValidVarDecLn === lastToken.line) {
 			if (data.name === "var") {
+				//MAYBE TAKE OUT
 				lastValidVarDecLn = data.line;
 				commentLns = 0;
+				lastNonCommentOrNonFunc = undefined;
 			}
 		}
 		else {
@@ -239,28 +271,35 @@ exports.register = function (linter) {
 				//declaration must not be at the top of dec scope
 				if (lastToken.line !== lastValidVarDecLn + commentLns &&
 					typeof lastNonCommentOrNonFunc !== "undefined") {
-					linter.warn("W121", {
-						line: data.line,
-						char: data.char
-					});
+					if (typeof lastFunc === "undefined" || 
+						lastToken.line !== lastFunc.line + commentLns) {
+						linter.warn("W121", {
+							line: data.line,
+							char: data.char
+						});
+					}
 				}
 				else {
 					lastValidVarDecLn = data.line;
 					commentLns = 0;
+					lastNonCommentOrNonFunc = undefined;
 				}
 			}
 		}
 
-		if (!_.contains(validVarDecLns, lastValidVarDecLn))
+		if (!_.contains(validVarDecLns, lastValidVarDecLn) && 
+			(typeof lastFunc === "undefined" || lastFunc.line !== data.line)) {
 			validVarDecLns.push(lastValidVarDecLn);
+		} 
 
 		lastLnPunc = (data.type === "(punctuator)" && lastValidVarDecLn ===
 			data.line) ? data : lastLnPunc;
 		lastToken = data;
 		if (lastToken.type !== "(comment)" && lastToken.name !== "function") {
-			if (lastToken.line !== lastValidVarDecLn &&
-				typeof lastNonCommentOrNonFunc === "undefined")
+			if (lastToken.line !== lastValidVarDecLn && typeof lastFunc !== "undefined" &&
+			lastToken.line !== lastFunc.line) {
 				lastNonCommentOrNonFunc = lastToken;
+			}
 		}
 	});
 };
