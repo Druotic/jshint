@@ -255,15 +255,6 @@ exports.register = function (linter) {
 			commentLns = 0;
 			lastNonCommentOrNonFunc = undefined;
 		}
-		else if (typeof lastToken !== "undefined" && lastToken.name === ";" && 
-			lastValidVarDecLn === lastToken.line) {
-			if (data.name === "var") {
-				//MAYBE TAKE OUT
-				lastValidVarDecLn = data.line;
-				commentLns = 0;
-				lastNonCommentOrNonFunc = undefined;
-			}
-		}
 		else {
 			if (data.name === "var") {
 				//check to see if current var is after a multi-line
