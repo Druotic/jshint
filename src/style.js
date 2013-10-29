@@ -180,8 +180,8 @@ exports.register = function (linter) {
 		validVarDecLns = [],
 		lastNonCommentOrNonFunc,
 		lastToken;
-	//store last valid var dec at each depth
-	var lastLnPunc = {
+	//store last punctuation on most recent valid var declaration line
+	var lastValidLnPunc = {
 		name : "",
 		type : "",
 	};
@@ -210,7 +210,7 @@ exports.register = function (linter) {
 					lastValidVarDecLn = data.line;
 					lastNonCommentOrNonFunc = undefined;
 					commentLns = 0;
-					//for functions declarations which are assigned to a var
+					//for function declarations which are assigned to a var
 					if (typeof lastFunc !== "undefined" && lastFunc.line === tok.line)
 						funcDecStack.pop();
 				}
@@ -246,9 +246,9 @@ exports.register = function (linter) {
 			(typeof lastFunc !== "undefined" && data.line === lastFunc.line + commentLns + 1)) {
 			if (data.name === "var")
 				lastValidVarDecLn = data.line;
-			if (data.name === "," && lastLnPunc.name === ",")
+			if (data.name === "," && lastValidLnPunc.name === "," && data.line !== lastValidLnPunc.line)
 				lastValidVarDecLn++;
-			if (data.name === ";" && lastLnPunc.name === ",")
+			if (data.name === ";" && lastValidLnPunc.name === ",")
 				lastValidVarDecLn++;
 
 			lastValidVarDecLn += commentLns;
@@ -283,8 +283,8 @@ exports.register = function (linter) {
 			validVarDecLns.push(lastValidVarDecLn);
 		} 
 
-		lastLnPunc = (data.type === "(punctuator)" && lastValidVarDecLn ===
-			data.line) ? data : lastLnPunc;
+		lastValidLnPunc = (data.type === "(punctuator)" && lastValidVarDecLn ===
+			data.line) ? data : lastValidLnPunc;
 		lastToken = data;
 		if (lastToken.type !== "(comment)" && lastToken.name !== "function") {
 			if (lastToken.line !== lastValidVarDecLn && typeof lastFunc !== "undefined" &&

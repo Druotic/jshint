@@ -7,6 +7,11 @@ var b = function () {
 	return b === c;
 };
 var c;
+var d = {1 :
+		"hello"};
+
+//sample comment
+var e;
 
 //fail - func scope
 (function () {
@@ -80,14 +85,14 @@ function func_name3 () {
 	var c;
 }
 
-function func_name4() {
+function func_name4 () {
 
 	//comment
 	var a = 2,
 		b = 3;
 
 	//some more comments
-	function inner() {
+	function inner () {
 
 		var c = 2,
 			d = 3;
@@ -95,4 +100,13 @@ function func_name4() {
 
 	//another comment
 	var e = 4; //should fail
+}
+
+//entire function should pass
+function func_name5 () {
+    var v1, v2, v3;
+
+    var v4 = [ "hello", 
+        "world" ];
+    var v5;
 }
